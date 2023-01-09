@@ -344,3 +344,7 @@ project.min.css
 vendors.js
 *.min.js
 {%- endif %}
+
+{%- if cookiecutter.use_azure == 'y' %}
+.azure
+{%- endif %}

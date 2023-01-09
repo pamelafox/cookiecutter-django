@@ -23,6 +23,9 @@ ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=["{{ cookiecutter.domai
 # DATABASES
 # ------------------------------------------------------------------------------
 DATABASES["default"]["CONN_MAX_AGE"] = env.int("CONN_MAX_AGE", default=60)  # noqa F405
+{% if cookiecutter.use_azure == 'y' %}
+DATABASES["default"]["OPTIONS"] = {"sslmode": "require"}  # noqa F405
+{%- endif -%}
 
 # CACHES
 # ------------------------------------------------------------------------------
