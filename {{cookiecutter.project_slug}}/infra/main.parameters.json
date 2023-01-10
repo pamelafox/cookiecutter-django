@@ -8,12 +8,9 @@
 		"location": {
 			"value": "${AZURE_LOCATION}"
 		},
-		"sendgridAPIKey": {
-			"value": "${SENDGRID_API_KEY}"
-		},
-        "principalId": {
-            "value": "${AZURE_PRINCIPAL_ID}"
-        },
+                "principalId": {
+                        "value": "${AZURE_PRINCIPAL_ID}"
+                },
 		"databasePassword": {
 			"value": "$(secretOrRandomPassword ${AZURE_KEY_VAULT_NAME} databasePassword)"
 		},

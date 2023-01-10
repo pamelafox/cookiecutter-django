@@ -6,8 +6,6 @@ param principalId string
 param databasePassword string
 @secure()
 param djangoSecretKey string
-@secure()
-param sendgridAPIKey string
 param tags object
 
 var prefix = '${name}-${resourceToken}'
@@ -150,7 +148,7 @@ resource web 'Microsoft.Web/sites@2022-03-01' = {
       alwaysOn: true
       linuxFxVersion: 'PYTHON|3.9'
       ftpsState: 'Disabled'
-      appCommandLine: 'python manage.py migrate && celery -A config.celery_app worker --loglevel=info --uid=65534 -B & gunicorn --workers 2 --threads 4 --timeout 60 --access-logfile \'-\' --error-logfile \'-\' --bind=0.0.0.0:8000 --chdir=/home/site/wwwroot config.wsgi'
+      appCommandLine: 'python manage.py migrate && {% if cookiecutter.use_celery == 'y' -%} celery -A config.celery_app worker --loglevel=info --uid=65534 -B & {%- endif %} gunicorn --workers 2 --threads 4 --timeout 60 --access-logfile \'-\' --error-logfile \'-\' --bind=0.0.0.0:8000 --chdir=/home/site/wwwroot config.wsgi'
     }
     httpsOnly: true
   }
@@ -166,15 +164,36 @@ resource web 'Microsoft.Web/sites@2022-03-01' = {
       DJANGO_DEBUG: 'False'
       DJANGO_SECRET_KEY: djangoSecretKey
       DJANGO_ALLOWED_HOSTS: web.properties.defaultHostName
+      DJANGO_ADMIN_URL: 'admin${uniqueString(resourceGroup().id)}'
       REDIS_URL: 'rediss://:${redisCache.listKeys().primaryKey}@${redisCache.properties.hostName}:${redisCache.properties.sslPort}/0?ssl_cert_reqs=CERT_REQUIRED'
+      {% if cookiecutter.use_celery == 'y' -%}
       CELERY_BROKER_URL: 'rediss://:${redisCache.listKeys().primaryKey}@${redisCache.properties.hostName}:${redisCache.properties.sslPort}/1?ssl_cert_reqs=CERT_REQUIRED'
+      {% endif %}
       DJANGO_AZURE_ACCOUNT_NAME: storageAccount.name
       DJANGO_AZURE_ACCOUNT_KEY: storageAccount.listKeys().keys[0].value
       DJANGO_AZURE_CONTAINER_NAME: 'django'
-      DJANGO_ADMIN_URL: 'admin${uniqueString(resourceGroup().id)}'
-      SENDGRID_API_KEY: sendgridAPIKey
+      {%- if cookiecutter.mail_service == 'Mailgun' %}
+      MAILGUN_API_KEY: '@Microsoft.KeyVault(VaultName=${keyVault.name};SecretName=MAILGUN-API-KEY)'
+      MAILGUN_SENDER_DOMAIN: web.properties.defaultHostName
+      {%- elif cookiecutter.mail_service == 'Mailjet' %}
+      MAILJET_API_KEY: '@Microsoft.KeyVault(VaultName=${keyVault.name};SecretName=MAILJEY-API-KEY)'
+      MAILJET_SECRET_KEY: '@Microsoft.KeyVault(VaultName=${keyVault.name};SecretName=MAILJEY-SECRET-KEY)'
+      {%- elif cookiecutter.mail_service == 'Mandrill' %}
+      MANDRILL_API_KEY: '@Microsoft.KeyVault(VaultName=${keyVault.name};SecretName=MANDRILL-API-KEY)'
+      {%- elif cookiecutter.mail_service == 'Postmark' %}
+      POSTMARK_SERVER_TOKEN: '@Microsoft.KeyVault(VaultName=${keyVault.name};SecretName=POSTMARK-SERVER-TOKEN)'
+      {%- elif cookiecutter.mail_service == 'Sendgrid' %}
+      # https://anymail.readthedocs.io/en/stable/esps/sendgrid/
+      SENDGRID_API_KEY: '@Microsoft.KeyVault(VaultName=${keyVault.name};SecretName=SENDGRID-API-KEY)'
+      {%- elif cookiecutter.mail_service == 'SendinBlue' %}
+      SENDINBLUE_API_KEY: '@Microsoft.KeyVault(VaultName=${keyVault.name};SecretName=SENDINBLUE-API-KEY)'
+      {%- elif cookiecutter.mail_service == 'SparkPost' %}
+      SPARKPOST_API_KEY: '@Microsoft.KeyVault(VaultName=${keyVault.name};SecretName=SPARKPOST-API-KEY)'
+      {%- endif %}
       SCM_DO_BUILD_DURING_DEPLOYMENT: 'true'
+      {%- if cookiecutter.frontend_pipeline == 'Gulp' %}
       POST_BUILD_COMMAND: 'npm install && npm run build'
+      {%- endif %}
     }
   }
 
@@ -297,8 +316,13 @@ resource keyVault 'Microsoft.KeyVault/vaults@2022-07-01' = {
     accessPolicies: [
       {
         objectId: principalId
-        permissions: { secrets: [ 'get', 'list' ] }
+        permissions: { secrets: [ 'get', 'list', 'set' ] }
         tenantId: subscription().tenantId
+      }
+      {
+        objectId: web.identity.principalId
+        permissions: { secrets: [ 'get'] }
+        tenantId: web.identity.tenantId
       }
     ]
   }
@@ -311,6 +335,7 @@ resource databasePasswordSecret 'Microsoft.KeyVault/vaults/secrets@2022-07-01' =
     value: databasePassword
   }
 }
+
 resource djangoSecretKeySecret 'Microsoft.KeyVault/vaults/secrets@2022-07-01' = {
   parent: keyVault
   name: 'djangoSecretKey'
@@ -318,6 +343,7 @@ resource djangoSecretKeySecret 'Microsoft.KeyVault/vaults/secrets@2022-07-01' = 
     value: djangoSecretKey
   }
 }
+
 
 output WEB_URI string = 'https://${web.properties.defaultHostName}'
 output AZURE_KEY_VAULT_NAME string = keyVault.name
