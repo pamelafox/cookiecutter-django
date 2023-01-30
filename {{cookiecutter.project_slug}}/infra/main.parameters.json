@@ -8,9 +8,9 @@
 		"location": {
 			"value": "${AZURE_LOCATION}"
 		},
-                "principalId": {
-                        "value": "${AZURE_PRINCIPAL_ID}"
-                },
+		"principalId": {
+			"value": "${AZURE_PRINCIPAL_ID}"
+		},
 		"databasePassword": {
 			"value": "$(secretOrRandomPassword ${AZURE_KEY_VAULT_NAME} databasePassword)"
 		},
