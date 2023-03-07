@@ -7,6 +7,7 @@ param databasePassword string
 @secure()
 param djangoSecretKey string
 param tags object
+param useRedis bool
 
 var prefix = '${name}-${resourceToken}'
 
@@ -104,7 +105,7 @@ resource container 'Microsoft.Storage/storageAccounts/blobServices/containers@20
   }
 }
 
-resource redisCache 'Microsoft.Cache/Redis@2020-06-01' = {
+resource redisCache 'Microsoft.Cache/Redis@2020-06-01' = if (useRedis) {
   name: '${prefix}-redis'
   location: location
   tags: tags
@@ -119,7 +120,7 @@ resource redisCache 'Microsoft.Cache/Redis@2020-06-01' = {
   }
 }
 
-resource Microsoft_Insights_diagnosticsettings_redisCacheName 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
+resource Microsoft_Insights_diagnosticsettings_redisCacheName 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = if (useRedis) {
   scope: redisCache
   name: redisCache.name
   properties: {
@@ -146,9 +147,9 @@ resource web 'Microsoft.Web/sites@2022-03-01' = {
     serverFarmId: appServicePlan.id
     siteConfig: {
       alwaysOn: true
-      linuxFxVersion: 'PYTHON|3.9'
+      linuxFxVersion: 'PYTHON|3.10'
       ftpsState: 'Disabled'
-      appCommandLine: 'python manage.py migrate && {% if cookiecutter.use_celery == 'y' -%} celery -A config.celery_app worker --loglevel=info --uid=65534 -B & {%- endif %} gunicorn --workers 2 --threads 4 --timeout 60 --access-logfile \'-\' --error-logfile \'-\' --bind=0.0.0.0:8000 --chdir=/home/site/wwwroot config.wsgi'
+      appCommandLine: 'azure_startup.sh'
     }
     httpsOnly: true
   }
@@ -165,9 +166,9 @@ resource web 'Microsoft.Web/sites@2022-03-01' = {
       DJANGO_SECRET_KEY: djangoSecretKey
       DJANGO_ALLOWED_HOSTS: web.properties.defaultHostName
       DJANGO_ADMIN_URL: 'admin${uniqueString(resourceGroup().id)}'
-      REDIS_URL: 'rediss://:${redisCache.listKeys().primaryKey}@${redisCache.properties.hostName}:${redisCache.properties.sslPort}/0?ssl_cert_reqs=CERT_REQUIRED'
+      REDIS_URL: useRedis ? 'rediss://:${redisCache.listKeys().primaryKey}@${redisCache.properties.hostName}:${redisCache.properties.sslPort}/0?ssl_cert_reqs=CERT_REQUIRED' : 'NO_REDIS_CREATED'
       {% if cookiecutter.use_celery == 'y' -%}
-      CELERY_BROKER_URL: 'rediss://:${redisCache.listKeys().primaryKey}@${redisCache.properties.hostName}:${redisCache.properties.sslPort}/1?ssl_cert_reqs=CERT_REQUIRED'
+      CELERY_BROKER_URL: useRedis ? 'rediss://:${redisCache.listKeys().primaryKey}@${redisCache.properties.hostName}:${redisCache.properties.sslPort}/1?ssl_cert_reqs=CERT_REQUIRED' : 'NO_REDIS_CREATED'
       {% endif %}
       DJANGO_AZURE_ACCOUNT_NAME: storageAccount.name
       DJANGO_AZURE_ACCOUNT_KEY: storageAccount.listKeys().keys[0].value
@@ -268,7 +269,7 @@ resource postgresServer 'Microsoft.DBforPostgreSQL/flexibleServers@2022-01-20-pr
     tier: 'Burstable'
   }
   properties: {
-    version: '13'
+    version: '{{ cookiecutter.postgresql_version }}'
     administratorLogin: 'django'
     administratorLoginPassword: databasePassword
     availabilityZone: '1'

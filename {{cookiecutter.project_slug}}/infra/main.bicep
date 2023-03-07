@@ -20,6 +20,9 @@ param databasePassword string
 @description('Django Secret Key')
 param djangoSecretKey string
 
+@description('Enables the creation of a Redis Cache (for Django Cache and Celery)')
+param useRedis bool = false
+
 var resourceToken = toLower(uniqueString(subscription().id, name, location))
 var tags = { 'azd-env-name': name }
 
@@ -40,5 +43,6 @@ module resources 'resources.bicep' = {
     principalId: principalId
     databasePassword: databasePassword
     djangoSecretKey: djangoSecretKey
+    useRedis: useRedis
   }
 }

@@ -87,7 +87,7 @@ def remove_heroku_build_hooks():
     shutil.rmtree("bin")
 
 def remove_azure_files():
-    file_names = ["azure.yaml", "requirements.txt"]
+    file_names = ["azure.yaml", "azure_startup.sh", "requirements.txt"]
     for file_name in file_names:
         os.remove(file_name)
     shutil.rmtree("infra")
