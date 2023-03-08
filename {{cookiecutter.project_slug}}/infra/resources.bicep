@@ -97,9 +97,22 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2019-06-01' = {
   }
 }
 
+resource blobServices 'Microsoft.Storage/storageAccounts/blobServices@2021-09-01' = {
+  name: 'default'
+  parent: storageAccount
+}
 
-resource container 'Microsoft.Storage/storageAccounts/blobServices/containers@2022-05-01' = {
-  name: '${storageAccount.name}/default/django'
+resource static 'Microsoft.Storage/storageAccounts/blobServices/containers@2021-09-01' = {
+  name: 'static'
+  parent: blobServices
+  properties: {
+    publicAccess: 'Blob'
+  }
+}
+
+resource media 'Microsoft.Storage/storageAccounts/blobServices/containers@2021-09-01' = {
+  name: 'media'
+  parent: blobServices
 }
 
 resource redisCache 'Microsoft.Cache/Redis@2020-06-01' = if (useRedis) {
@@ -169,8 +182,6 @@ resource web 'Microsoft.Web/sites@2022-03-01' = {
       {% endif %}
       DJANGO_AZURE_ACCOUNT_NAME: storageAccount.name
       DJANGO_AZURE_ACCOUNT_KEY: storageAccount.listKeys().keys[0].value
-      DJANGO_AZURE_CONTAINER_NAME: 'django'
-      DJANGO_AZURE_URL_EXPIRATION_SECS: '604800' // 1 week
       {%- if cookiecutter.mail_service == 'Mailgun' %}
       MAILGUN_API_KEY: '@Microsoft.KeyVault(VaultName=${keyVault.name};SecretName=MAILGUN-API-KEY)'
       MAILGUN_SENDER_DOMAIN: web.properties.defaultHostName

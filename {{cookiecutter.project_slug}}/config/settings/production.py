@@ -104,8 +104,6 @@ GS_DEFAULT_ACL = "publicRead"
 {% elif cookiecutter.cloud_provider == 'Azure' %}
 AZURE_ACCOUNT_KEY = env("DJANGO_AZURE_ACCOUNT_KEY")
 AZURE_ACCOUNT_NAME = env("DJANGO_AZURE_ACCOUNT_NAME")
-AZURE_CONTAINER = env("DJANGO_AZURE_CONTAINER_NAME")
-AZURE_URL_EXPIRATION_SECS = env.int("DJANGO_AZURE_URL_EXPIRATION_SECS", default=None)
 {% endif -%}
 
 {% if cookiecutter.cloud_provider != 'None' or cookiecutter.use_whitenoise == 'y' -%}
@@ -259,7 +257,7 @@ COMPRESS_FILTERS = {
     "js": ["compressor.filters.jsmin.JSMinFilter"],
 }
 {% endif %}
-{%- if cookiecutter.use_whitenoise == 'n' -%}
+{%- if cookiecutter.use_whitenoise == 'n' and cookiecutter.cloud_provider in ('AWS', 'GCP') -%}
 # Collectfast
 # ------------------------------------------------------------------------------
 # https://github.com/antonagestam/collectfast#installation
