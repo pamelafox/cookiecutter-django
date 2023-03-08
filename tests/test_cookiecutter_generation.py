@@ -101,6 +101,7 @@ SUPPORTED_COMBINATIONS = [
     {"frontend_pipeline": "None"},
     {"frontend_pipeline": "Django Compressor"},
     {"frontend_pipeline": "Gulp"},
+    {"frontend_pipeline": "Webpack"},
     {"use_celery": "y"},
     {"use_celery": "n"},
     {"use_mailhog": "y"},
@@ -136,11 +137,11 @@ def _fixture_id(ctx):
     return "-".join(f"{key}:{value}" for key, value in ctx.items())
 
 
-def build_files_list(root_dir):
+def build_files_list(base_dir):
     """Build a list containing absolute paths to the generated files."""
     return [
         os.path.join(dirpath, file_path)
-        for dirpath, subdirs, files in os.walk(root_dir)
+        for dirpath, subdirs, files in os.walk(base_dir)
         for file_path in files
     ]
 
@@ -233,7 +234,7 @@ def test_travis_invokes_pytest(cookies, context, use_docker, expected_test_scrip
         ("y", "docker-compose -f local.yml run django pytest"),
     ],
 )
-def test_gitlab_invokes_flake8_and_pytest(
+def test_gitlab_invokes_precommit_and_pytest(
     cookies, context, use_docker, expected_test_script
 ):
     context.update({"ci_tool": "Gitlab", "use_docker": use_docker})
@@ -247,7 +248,9 @@ def test_gitlab_invokes_flake8_and_pytest(
     with open(f"{result.project_path}/.gitlab-ci.yml") as gitlab_yml:
         try:
             gitlab_config = yaml.safe_load(gitlab_yml)
-            assert gitlab_config["flake8"]["script"] == ["flake8"]
+            assert gitlab_config["precommit"]["script"] == [
+                "pre-commit run --show-diff-on-failure --color=always --all-files"
+            ]
             assert gitlab_config["pytest"]["script"] == [expected_test_script]
         except yaml.YAMLError as e:
             pytest.fail(e)
