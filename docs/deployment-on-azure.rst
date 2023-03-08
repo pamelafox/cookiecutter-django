@@ -183,7 +183,7 @@ as the broker, and lets you schedule tasks in Django Admin thanks to Celery Beat
 When your deployed app starts up, it always starts the `celery` worker at the same time with this command:
 
 ```
-celery -A config.celery_app worker --loglevel=info --uid=65534 -B
+celery -A config.celery_app worker --loglevel=info --uid=65534 -B --detach
 ```
 
 To test it out and make sure it's working, you can run the sample `get_users_count` task provided in the project template.

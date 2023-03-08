@@ -100,9 +100,6 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2019-06-01' = {
 
 resource container 'Microsoft.Storage/storageAccounts/blobServices/containers@2022-05-01' = {
   name: '${storageAccount.name}/default/django'
-  properties: {
-    publicAccess: 'Blob'
-  }
 }
 
 resource redisCache 'Microsoft.Cache/Redis@2020-06-01' = if (useRedis) {
@@ -166,13 +163,14 @@ resource web 'Microsoft.Web/sites@2022-03-01' = {
       DJANGO_SECRET_KEY: djangoSecretKey
       DJANGO_ALLOWED_HOSTS: web.properties.defaultHostName
       DJANGO_ADMIN_URL: 'admin${uniqueString(resourceGroup().id)}'
-      REDIS_URL: useRedis ? 'rediss://:${redisCache.listKeys().primaryKey}@${redisCache.properties.hostName}:${redisCache.properties.sslPort}/0?ssl_cert_reqs=CERT_REQUIRED' : 'NO_REDIS_CREATED'
+      REDIS_URL: useRedis ? 'rediss://:${redisCache.listKeys().primaryKey}@${redisCache.properties.hostName}:${redisCache.properties.sslPort}/0?ssl_cert_reqs=required' : 'NO_REDIS_CREATED'
       {% if cookiecutter.use_celery == 'y' -%}
-      CELERY_BROKER_URL: useRedis ? 'rediss://:${redisCache.listKeys().primaryKey}@${redisCache.properties.hostName}:${redisCache.properties.sslPort}/1?ssl_cert_reqs=CERT_REQUIRED' : 'NO_REDIS_CREATED'
+      CELERY_BROKER_URL: useRedis ? 'rediss://:${redisCache.listKeys().primaryKey}@${redisCache.properties.hostName}:${redisCache.properties.sslPort}/1?ssl_cert_reqs=required' : 'NO_REDIS_CREATED'
       {% endif %}
       DJANGO_AZURE_ACCOUNT_NAME: storageAccount.name
       DJANGO_AZURE_ACCOUNT_KEY: storageAccount.listKeys().keys[0].value
       DJANGO_AZURE_CONTAINER_NAME: 'django'
+      DJANGO_AZURE_URL_EXPIRATION_SECS: '604800' // 1 week
       {%- if cookiecutter.mail_service == 'Mailgun' %}
       MAILGUN_API_KEY: '@Microsoft.KeyVault(VaultName=${keyVault.name};SecretName=MAILGUN-API-KEY)'
       MAILGUN_SENDER_DOMAIN: web.properties.defaultHostName
