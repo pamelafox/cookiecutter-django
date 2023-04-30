@@ -352,3 +352,7 @@ vendors.js
 {{ cookiecutter.project_slug }}/static/webpack_bundles/
 webpack-stats.json
 {%- endif %}
+
+{%- if cookiecutter.use_azure == 'y' %}
+.azure
+{%- endif %}

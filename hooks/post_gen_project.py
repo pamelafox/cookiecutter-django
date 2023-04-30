@@ -87,6 +87,11 @@ def remove_heroku_files():
 def remove_heroku_build_hooks():
     shutil.rmtree("bin")
 
+def remove_azure_files():
+    file_names = ["azure.yaml", "azure_startup.sh", "requirements.txt"]
+    for file_name in file_names:
+        os.remove(file_name)
+    shutil.rmtree("infra")
 
 def remove_sass_files():
     shutil.rmtree(os.path.join("{{cookiecutter.project_slug}}", "static", "sass"))
@@ -112,7 +117,6 @@ def remove_vendors_js():
     )
     if os.path.exists(vendors_js_path):
         os.remove(vendors_js_path)
-
 
 def remove_packagejson_file():
     file_names = ["package.json"]
@@ -459,6 +463,9 @@ def main():
         remove_heroku_files()
     elif "{{ cookiecutter.frontend_pipeline }}" != "Django Compressor":
         remove_heroku_build_hooks()
+
+    if "{{ cookiecutter.use_azure }}".lower() == "n":
+        remove_azure_files()
 
     if (
         "{{ cookiecutter.use_docker }}".lower() == "n"

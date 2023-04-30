@@ -112,6 +112,8 @@ SUPPORTED_COMBINATIONS = [
     {"use_whitenoise": "n"},
     {"use_heroku": "y"},
     {"use_heroku": "n"},
+    {"use_azure": "y"},
+    {"use_azure": "n"},
     {"ci_tool": "None"},
     {"ci_tool": "Travis"},
     {"ci_tool": "Gitlab"},

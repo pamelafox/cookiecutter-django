@@ -51,7 +51,6 @@ DJANGO_GCP_STORAGE_BUCKET_NAME          GS_BUCKET_NAME              n/a         
 GOOGLE_APPLICATION_CREDENTIALS          n/a                         n/a                                            raises error
 DJANGO_AZURE_ACCOUNT_KEY                AZURE_ACCOUNT_KEY           n/a                                            raises error
 DJANGO_AZURE_ACCOUNT_NAME               AZURE_ACCOUNT_NAME          n/a                                            raises error
-DJANGO_AZURE_CONTAINER_NAME             AZURE_CONTAINER             n/a                                            raises error
 SENTRY_DSN                              SENTRY_DSN                  n/a                                            raises error
 SENTRY_ENVIRONMENT                      n/a                         n/a                                            production
 SENTRY_TRACES_SAMPLE_RATE               n/a                         n/a                                            0.0

@@ -158,6 +158,7 @@ Answer the prompts with your own desired [options](http://cookiecutter-django.re
     use_sentry [n]: y
     use_whitenoise [n]: n
     use_heroku [n]: y
+    use_azure [n]: n
     Select ci_tool:
     1 - None
     2 - Travis

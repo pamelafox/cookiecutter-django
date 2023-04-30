@@ -116,6 +116,10 @@ use_heroku:
     Indicates whether the project should be configured so as to be deployable
     to Heroku_.
 
+use_azure:
+    Indicates whether the project should be configured so as to be deployable
+    to `Azure App Service`_.
+
 ci_tool:
     Select a CI tool for running tests. The choices are:
 
@@ -177,6 +181,8 @@ debug:
 .. _WhiteNoise: https://github.com/evansd/whitenoise
 
 .. _Heroku: https://github.com/heroku/heroku-buildpack-python
+
+.. _Azure App Service: https://learn.microsoft.com/en-us/azure/app-service/overview
 
 .. _Travis CI: https://travis-ci.org/
 
